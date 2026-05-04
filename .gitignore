@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+**/.gradle/
+**/build/
+*.jks
+*.keystore
+*.tsbuildinfo
+.DS_Store

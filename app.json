@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Scientific Calculator",
+    "slug": "scientific-calculator",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.mosaeedceo.scientificcalculator",
+      "permissions": [],
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "./plugins/withArm64Only"
+    ]
+  }
+}
