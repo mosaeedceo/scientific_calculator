@@ -2,7 +2,6 @@ import React, { ReactNode, useCallback, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -142,6 +141,7 @@ interface CalcButtonProps {
   type?: ButtonType;
   onPress: () => void;
   width?: number | `${number}%`;
+  scale?: number;
 }
 
 function CalcButton({
@@ -152,16 +152,24 @@ function CalcButton({
   type = "normal",
   onPress,
   width,
+  scale: explicitScale,
 }: CalcButtonProps) {
+  const widthNumber = typeof width === "number" ? width : undefined;
+  const scale =
+    explicitScale ??
+    Math.min(1, Math.max(0.55, widthNumber ? widthNumber / (type === "small" ? 43 : 52) : 1));
   const buttonStyles = [
     styles.button,
+    {
+      height: (type === "small" ? 22 : 31) * scale,
+      borderRadius: 4 * scale,
+    },
     type === "numpad" && styles.numpadButton,
     type === "accent" && styles.accentButton,
-    type === "small" && styles.smallButton,
   ];
   const wrapperStyles = [
     styles.buttonWrapper,
-    type === "small" ? styles.smallWrapper : styles.standardWrapper,
+    { height: (type === "small" ? 32 : 42) * scale },
     width ? { width } : null,
   ];
 
@@ -169,7 +177,10 @@ function CalcButton({
     <View style={wrapperStyles}>
       <View style={styles.topLabelRow} pointerEvents="none">
         {shiftLabel ? (
-          <Text style={styles.shiftLabel} numberOfLines={1}>
+          <Text
+            style={[styles.shiftLabel, { fontSize: 6.8 * scale }]}
+            numberOfLines={1}
+          >
             {shiftLabel}
           </Text>
         ) : (
@@ -177,12 +188,18 @@ function CalcButton({
         )}
         <View style={styles.rightLabels}>
           {blueLabel ? (
-            <Text style={styles.blueLabel} numberOfLines={1}>
+            <Text
+              style={[styles.blueLabel, { fontSize: 6 * scale }]}
+              numberOfLines={1}
+            >
               {blueLabel}
             </Text>
           ) : null}
           {alphaLabel ? (
-            <Text style={styles.alphaLabel} numberOfLines={1}>
+            <Text
+              style={[styles.alphaLabel, { fontSize: 6.8 * scale }]}
+              numberOfLines={1}
+            >
               {alphaLabel}
             </Text>
           ) : null}
@@ -197,7 +214,11 @@ function CalcButton({
           pressed ? styles.buttonPressed : null,
         ]}
       >
-        <Text style={styles.buttonText} numberOfLines={1} adjustsFontSizeToFit>
+        <Text
+          style={[styles.buttonText, { fontSize: (type === "small" ? 9 : 11) * scale }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
           {label}
         </Text>
       </Pressable>
@@ -220,7 +241,7 @@ function StatusIndicator({
 }
 
 export default function App() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [displayExp, setDisplayExp] = useState("");
   const [displayResult, setDisplayResult] = useState("");
   const [ans, setAns] = useState(0);
@@ -228,10 +249,16 @@ export default function App() {
   const [isAlpha, setIsAlpha] = useState(false);
   const [angleMode, setAngleMode] = useState<AngleMode>("DEG");
 
-  const calculatorWidth = Math.min(width - 28, 340);
-  const innerWidth = calculatorWidth - 40;
-  const scientificButtonWidth = (innerWidth - 40) / 6;
-  const numpadButtonWidth = (innerWidth - 40) / 5;
+  const availableWidth = width - 24;
+  const availableHeight = height - 20;
+  const calculatorWidth = Math.min(availableWidth, availableHeight * 0.435, 320);
+  const calculatorHeight = Math.min(availableHeight, calculatorWidth / 0.435);
+  const scale = calculatorWidth / 340;
+  const innerWidth = calculatorWidth - 40 * scale;
+  const scientificGap = 7 * scale;
+  const numpadGap = 9 * scale;
+  const scientificButtonWidth = (innerWidth - scientificGap * 5) / 6;
+  const numpadButtonWidth = (innerWidth - numpadGap * 4) / 5;
 
   const handleKey = useCallback(
     (val: string, shiftVal: string | null = null, alphaVal: string | null = null) => {
@@ -296,21 +323,38 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.page}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.calculatorBody, { width: calculatorWidth }]}>
-          <View style={styles.brandingHeader}>
-            <Text style={styles.brand}>CASIO</Text>
-            <Text style={styles.model}>fx-82MS</Text>
+      <View style={styles.page}>
+        <View
+          style={[
+            styles.calculatorBody,
+            {
+              width: calculatorWidth,
+              minHeight: calculatorHeight,
+              maxHeight: availableHeight,
+              padding: 20 * scale,
+              borderRadius: 32 * scale,
+            },
+          ]}
+        >
+          <View style={[styles.brandingHeader, { marginBottom: 10 * scale }]}>
+            <Text style={[styles.brand, { fontSize: 24 * scale }]}>CASIO</Text>
+            <Text style={[styles.model, { fontSize: 10 * scale }]}>fx-82MS</Text>
           </View>
-          <Text style={styles.subtitle}>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                fontSize: 10 * scale,
+                marginBottom: 14 * scale,
+                letterSpacing: 2.2 * scale,
+              },
+            ]}
+          >
             S-V.P.A.M. <Text style={styles.subtitleSmall}>2nd edition</Text>
           </Text>
 
-          <View style={styles.screenBezel}>
-            <View style={styles.screen}>
+          <View style={[styles.screenBezel, { marginBottom: 12 * scale }]}>
+            <View style={[styles.screen, { height: 64 * scale }]}>
               <View style={styles.gridOverlay} />
               <View style={styles.statusRow}>
                 <StatusIndicator visible={isShift}>S</StatusIndicator>
@@ -327,15 +371,23 @@ export default function App() {
           </View>
 
           <View style={styles.keypad}>
-            <View style={styles.controlRow}>
-              <View style={styles.roundGroup}>
+            <View style={[styles.controlRow, { height: 76 * scale }]}>
+              <View style={[styles.roundGroup, { gap: 12 * scale }]}>
                 <View style={styles.roundStack}>
                   <Text style={styles.shiftRoundLabel}>SHIFT</Text>
                   <Pressable
                     onPress={() => handleKey("SHIFT")}
                     accessibilityRole="button"
                     accessibilityLabel="SHIFT"
-                    style={[styles.roundButton, isShift && styles.roundActive]}
+                    style={[
+                      styles.roundButton,
+                      {
+                        width: 30 * scale,
+                        height: 30 * scale,
+                        borderRadius: 15 * scale,
+                      },
+                      isShift && styles.roundActive,
+                    ]}
                   />
                 </View>
                 <View style={styles.roundStack}>
@@ -344,20 +396,47 @@ export default function App() {
                     onPress={() => handleKey("ALPHA")}
                     accessibilityRole="button"
                     accessibilityLabel="ALPHA"
-                    style={[styles.roundButton, isAlpha && styles.roundActive]}
+                    style={[
+                      styles.roundButton,
+                      {
+                        width: 30 * scale,
+                        height: 30 * scale,
+                        borderRadius: 15 * scale,
+                      },
+                      isAlpha && styles.roundActive,
+                    ]}
                   />
                 </View>
               </View>
 
-              <View style={styles.dpad}>
+              <View
+                style={[
+                  styles.dpad,
+                  {
+                    width: 64 * scale,
+                    height: 64 * scale,
+                    marginLeft: -32 * scale,
+                    borderRadius: 32 * scale,
+                  },
+                ]}
+              >
                 <Text style={[styles.dpadArrow, styles.dpadUp]}>▲</Text>
                 <Text style={[styles.dpadArrow, styles.dpadDown]}>▼</Text>
                 <Text style={[styles.dpadArrow, styles.dpadLeft]}>◀</Text>
                 <Text style={[styles.dpadArrow, styles.dpadRight]}>▶</Text>
-                <View style={styles.dpadCenter} />
+                <View
+                  style={[
+                    styles.dpadCenter,
+                    {
+                      width: 16 * scale,
+                      height: 16 * scale,
+                      borderRadius: 8 * scale,
+                    },
+                  ]}
+                />
               </View>
 
-              <View style={styles.roundGroup}>
+              <View style={[styles.roundGroup, { gap: 12 * scale }]}>
                 <View style={styles.roundStack}>
                   <View style={styles.modeLabelRow}>
                     <Text style={styles.whiteRoundLabel}>MODE</Text>
@@ -367,7 +446,14 @@ export default function App() {
                     onPress={() => handleKey("MODE")}
                     accessibilityRole="button"
                     accessibilityLabel="MODE"
-                    style={styles.roundButton}
+                    style={[
+                      styles.roundButton,
+                      {
+                        width: 30 * scale,
+                        height: 30 * scale,
+                        borderRadius: 15 * scale,
+                      },
+                    ]}
                   />
                 </View>
                 <View style={styles.roundStack}>
@@ -376,7 +462,14 @@ export default function App() {
                     onPress={() => handleKey("AC")}
                     accessibilityRole="button"
                     accessibilityLabel="ON"
-                    style={styles.roundButton}
+                    style={[
+                      styles.roundButton,
+                      {
+                        width: 30 * scale,
+                        height: 30 * scale,
+                        borderRadius: 15 * scale,
+                      },
+                    ]}
                   />
                 </View>
               </View>
@@ -389,14 +482,16 @@ export default function App() {
                   shiftLabel="x!"
                   onPress={() => handleKey("^-1")}
                   type="small"
-                  width={44}
+                  width={scientificButtonWidth}
+                  scale={scale}
                 />
                 <CalcButton
                   label="nCr"
                   shiftLabel="nPr"
                   onPress={() => handleKey("C", "P")}
                   type="small"
-                  width={44}
+                  width={scientificButtonWidth}
+                  scale={scale}
                 />
               </View>
               <View style={styles.scientificPair}>
@@ -406,37 +501,42 @@ export default function App() {
                   alphaLabel=":"
                   onPress={() => handleKey("Pol(")}
                   type="small"
-                  width={44}
+                  width={scientificButtonWidth}
+                  scale={scale}
                 />
                 <CalcButton
                   label="x³"
                   shiftLabel="³√"
                   onPress={() => handleKey("^3", "^(1/3)")}
                   type="small"
-                  width={44}
+                  width={scientificButtonWidth}
+                  scale={scale}
                 />
               </View>
             </View>
 
-            <View style={styles.grid6}>
+            <View style={[styles.grid6, { gap: scientificGap }]}>
               <CalcButton
                 label="ab/c"
                 shiftLabel="d/c"
                 onPress={() => handleKey("┘")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="√"
                 onPress={() => handleKey("sqrt(")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="x²"
                 onPress={() => handleKey("^2")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="^"
@@ -444,6 +544,7 @@ export default function App() {
                 onPress={() => handleKey("^")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="log"
@@ -451,6 +552,7 @@ export default function App() {
                 onPress={() => handleKey("log(", "10^")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="ln"
@@ -459,6 +561,7 @@ export default function App() {
                 onPress={() => handleKey("ln(", "e^")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
 
               <CalcButton
@@ -467,6 +570,7 @@ export default function App() {
                 onPress={() => handleKey("-")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label={"°'\""}
@@ -475,6 +579,7 @@ export default function App() {
                 onPress={() => undefined}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="hyp"
@@ -482,6 +587,7 @@ export default function App() {
                 onPress={() => undefined}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="sin"
@@ -490,6 +596,7 @@ export default function App() {
                 onPress={() => handleKey("sin(", "asin(")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="cos"
@@ -498,6 +605,7 @@ export default function App() {
                 onPress={() => handleKey("cos(", "acos(")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="tan"
@@ -506,6 +614,7 @@ export default function App() {
                 onPress={() => handleKey("tan(", "atan(")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
 
               <CalcButton
@@ -514,6 +623,7 @@ export default function App() {
                 onPress={() => undefined}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="ENG"
@@ -521,6 +631,7 @@ export default function App() {
                 onPress={() => undefined}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="("
@@ -528,6 +639,7 @@ export default function App() {
                 onPress={() => handleKey("(")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label=")"
@@ -536,6 +648,7 @@ export default function App() {
                 onPress={() => handleKey(")")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label=","
@@ -543,6 +656,7 @@ export default function App() {
                 onPress={() => handleKey(",")}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
               <CalcButton
                 label="M+"
@@ -551,27 +665,31 @@ export default function App() {
                 onPress={() => undefined}
                 type="small"
                 width={scientificButtonWidth}
+              scale={scale}
               />
             </View>
 
-            <View style={styles.grid5}>
+            <View style={[styles.grid5, { gap: numpadGap }]}>
               <CalcButton
                 label="7"
                 onPress={() => handleKey("7")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="8"
                 onPress={() => handleKey("8")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="9"
                 onPress={() => handleKey("9")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="DEL"
@@ -579,6 +697,7 @@ export default function App() {
                 onPress={() => handleKey("DEL")}
                 type="accent"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="AC"
@@ -587,6 +706,7 @@ export default function App() {
                 onPress={() => handleKey("AC")}
                 type="accent"
                 width={numpadButtonWidth}
+                scale={scale}
               />
 
               <CalcButton
@@ -594,28 +714,33 @@ export default function App() {
                 onPress={() => handleKey("4")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="5"
                 onPress={() => handleKey("5")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="6"
                 onPress={() => handleKey("6")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="×"
                 onPress={() => handleKey("×")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="÷"
                 onPress={() => handleKey("÷")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
 
               <CalcButton
@@ -624,6 +749,7 @@ export default function App() {
                 onPress={() => handleKey("1")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="2"
@@ -631,22 +757,26 @@ export default function App() {
                 onPress={() => handleKey("2")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="3"
                 onPress={() => handleKey("3")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="+"
                 onPress={() => handleKey("+")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="−"
                 onPress={() => handleKey("−")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
 
               <CalcButton
@@ -655,6 +785,7 @@ export default function App() {
                 onPress={() => handleKey("0")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="."
@@ -662,29 +793,33 @@ export default function App() {
                 onPress={() => handleKey(".")}
                 type="numpad"
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="×10ˣ"
                 shiftLabel="π"
                 onPress={() => handleKey("E", "π")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="Ans"
                 shiftLabel="DRG▶"
                 onPress={() => handleKey("Ans")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
               <CalcButton
                 label="="
                 shiftLabel="%"
                 onPress={() => handleKey("=")}
                 width={numpadButtonWidth}
+                scale={scale}
               />
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -695,15 +830,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0e0e0",
   },
   page: {
-    flexGrow: 1,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   calculatorBody: {
     backgroundColor: "#363231",
     borderRadius: 32,
-    padding: 20,
     borderWidth: 2,
     borderColor: "#4f4a48",
     shadowColor: "#000",
@@ -716,7 +851,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: 14,
     paddingHorizontal: 8,
   },
   brand: {
@@ -736,7 +870,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 2.4,
-    marginBottom: 16,
     opacity: 0.8,
   },
   subtitleSmall: {
@@ -746,9 +879,8 @@ const styles = StyleSheet.create({
   },
   screenBezel: {
     backgroundColor: "#24211f",
-    padding: 8,
+    padding: 6,
     borderRadius: 12,
-    marginBottom: 24,
     shadowColor: "#000",
     shadowOpacity: 0.5,
     shadowRadius: 10,
@@ -756,12 +888,11 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   screen: {
-    height: 96,
     backgroundColor: "#96a492",
     borderRadius: 6,
     borderWidth: 2,
     borderColor: "#768573",
-    padding: 8,
+    padding: 6,
     overflow: "hidden",
   },
   gridOverlay: {
@@ -802,15 +933,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   keypad: {
-    gap: 4,
+    gap: 3,
   },
   controlRow: {
-    height: 80,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     position: "relative",
-    marginTop: 8,
+    marginTop: 6,
   },
   roundGroup: {
     flexDirection: "row",
@@ -818,7 +948,7 @@ const styles = StyleSheet.create({
   },
   roundStack: {
     alignItems: "center",
-    gap: 5,
+    gap: 3,
   },
   shiftRoundLabel: {
     color: "#d5ad40",
@@ -840,9 +970,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   roundButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
     backgroundColor: "#2a2624",
     borderWidth: 1,
     borderColor: "#3a3533",
@@ -860,10 +987,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     left: "50%",
-    width: 80,
-    height: 80,
-    marginLeft: -40,
-    borderRadius: 40,
     backgroundColor: "#221e1d",
     alignItems: "center",
     justifyContent: "center",
@@ -892,9 +1015,6 @@ const styles = StyleSheet.create({
     right: 8,
   },
   dpadCenter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
     backgroundColor: "#1b1817",
   },
   scientificTopRow: {
@@ -904,21 +1024,19 @@ const styles = StyleSheet.create({
   },
   scientificPair: {
     flexDirection: "row",
-    gap: 12,
+    gap: 7,
   },
   grid6: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
     paddingHorizontal: 1,
   },
   grid5: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
     paddingHorizontal: 1,
-    paddingTop: 12,
-    marginTop: 8,
+    paddingTop: 8,
+    marginTop: 5,
     borderTopWidth: 1,
     borderTopColor: "#4f4a48",
   },
@@ -927,27 +1045,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
   },
-  smallWrapper: {
-    height: 44,
-  },
-  standardWrapper: {
-    height: 56,
-  },
   topLabelRow: {
     position: "absolute",
     top: 1,
     left: 1,
     right: 1,
-    minHeight: 14,
+    minHeight: 10,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   shiftLabel: {
     color: "#d5ad40",
     flex: 1,
-    fontSize: 8,
     fontWeight: "700",
-    lineHeight: 10,
+    lineHeight: 8,
   },
   rightLabels: {
     flex: 1,
@@ -955,21 +1066,18 @@ const styles = StyleSheet.create({
   },
   alphaLabel: {
     color: "#cc5669",
-    fontSize: 8,
-    fontWeight: "700",
-    lineHeight: 9,
-    textAlign: "right",
-  },
-  blueLabel: {
-    color: "#489ea8",
-    fontSize: 7,
     fontWeight: "700",
     lineHeight: 8,
     textAlign: "right",
   },
+  blueLabel: {
+    color: "#489ea8",
+    fontWeight: "700",
+    lineHeight: 7,
+    textAlign: "right",
+  },
   button: {
     width: "100%",
-    height: 40,
     borderRadius: 6,
     backgroundColor: "#2a2624",
     borderWidth: 1,
@@ -982,16 +1090,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  smallButton: {
-    height: 28,
-  },
   numpadButton: {
-    height: 40,
     backgroundColor: "#4a4441",
     borderColor: "#59524f",
   },
   accentButton: {
-    height: 40,
     backgroundColor: "#c44961",
     borderColor: "#d66076",
   },
@@ -1001,7 +1104,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 13,
     fontWeight: "500",
   },
 });
